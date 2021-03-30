@@ -19,6 +19,10 @@ public class AdversarialSearch {
             int n){
         
         PlayPosition predictedPlay = this.evaluationFunction(m, playedPositions, positionsWorth, currPlay, n);
+        if(predictedPlay == null){
+            System.out.println("Victory Has Been Attained");
+            return predictedPlay;
+        }
         if(predictedPlay.isPlayer()) System.out.println("My Player To Play Maximum Move");
         else System.out.println("My Opponent To Play My Minimum Move");
         
@@ -56,6 +60,9 @@ public class AdversarialSearch {
                 if(this.exists(directionX[dir], directionY[dir], n)){
                     if(currPlay.isPlayer()){//If my player played last and opponent to play now
                         value = positionsWorth.get(directionX[dir]).get(directionY[dir]) + 1;
+                        if(value >= m){//check if victory has been attained
+                            return new PlayPosition();
+                        }
                         //checking if the position is the minimum value returns for my player and if the position has not been played
                         if(value < min && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
                             //This is the mini part of minimax
@@ -65,6 +72,9 @@ public class AdversarialSearch {
                         }
                     }else{//If my opponent played last and I am to play now
                         value = positionsWorth.get(directionX[dir]).get(directionY[dir]) - 1;
+                        if(value <= -m){//check if victory has been attained
+                            return new PlayPosition();
+                        }
                         //checking if the position is the maximum value returns for my player and if the position has not been played
                         if(value > min && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
                             //This is the maxi part of minimax
