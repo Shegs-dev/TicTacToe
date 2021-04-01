@@ -34,6 +34,8 @@ public class TicTacToe {
     public TicTacToe(int m, int n){
         this.m = m;
         this.n = n;
+        playedPositions = new ArrayList<>();
+        positionsWorth = new ArrayList<>();
         for(int i = 0; i < n; i++){
             List<Integer> pPositions = new ArrayList<>();
             List<Integer> pWorth = new ArrayList<>();
