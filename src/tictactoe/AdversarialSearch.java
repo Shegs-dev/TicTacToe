@@ -36,7 +36,7 @@ public class AdversarialSearch {
         int min = -m;
         int minPosX = currPlay.getX();
         int minPosY = currPlay.getY();
-        boolean playerStatus = false;
+        boolean playerStatus = true;
         //Update current play on played positions
         List<Integer> getPlayedPositionsRow = new ArrayList<>();
         if(playedPositions.get(currPlay.getX()) != null){
@@ -58,25 +58,32 @@ public class AdversarialSearch {
                 int value = 0;
                 //Checking if the position selected to evaluate exists on the board
                 if(this.exists(directionX[dir], directionY[dir], n)){
+                    System.out.println("1");
                     if(currPlay.isPlayer()){//If my player played last and opponent to play now
+                        System.out.println("2");
                         value = positionsWorth.get(directionX[dir]).get(directionY[dir]) + 1;
                         if(value >= m){//check if victory has been attained
                             return new PlayPosition();
                         }
+                        positionsWorth.get(directionX[dir]).add(directionY[dir], value);
                         //checking if the position is the minimum value returns for my player and if the position has not been played
                         if(value < min && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
                             //This is the mini part of minimax
+                            System.out.println("4");
                             minPosX = directionX[dir];
                             minPosY = directionY[dir];
                             playerStatus = false;
                         }
                     }else{//If my opponent played last and I am to play now
+                        System.out.println("3");
                         value = positionsWorth.get(directionX[dir]).get(directionY[dir]) - 1;
                         if(value <= -m){//check if victory has been attained
                             return new PlayPosition();
                         }
+                        positionsWorth.get(directionX[dir]).add(directionY[dir], value);
                         //checking if the position is the maximum value returns for my player and if the position has not been played
                         if(value > min && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
+                            System.out.println("5");
                             //This is the maxi part of minimax
                             minPosX = directionX[dir];
                             minPosY = directionY[dir];
@@ -88,7 +95,7 @@ public class AdversarialSearch {
             
             i++;
         }
-        
+        System.out.println(playerStatus);
         PlayPosition predictedPosition = new PlayPosition();
         predictedPosition.setPlayer(playerStatus);
         predictedPosition.setX(minPosX);
