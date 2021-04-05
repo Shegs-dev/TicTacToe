@@ -15,9 +15,9 @@ public class Proxy {
     private static final String baseURL = "https://www.notexponential.com/aip2pgaming/api/index.php";
     private static final String apiKey = "78d61825eb0b03a18474";
     private static final String userID = "1056";
-    private static final String gameID = "2984";//put the gameId here
-    private static final String teamID = "1279";//put the teamId here
-    private static final String count = "72";//get the count for most recent moves
+    private static final String gameID = "3121";//put the gameId here
+    private static final String teamID = "1277";//put the teamId here
+    private static final String count = "144";//get the count for most recent moves
 
     public static String getGameID() {
         return gameID;

@@ -36,11 +36,23 @@ public class TicTacToe {
     private static int n;//set the length of the board
     private static List<List<Integer>> playedPositions;//replicate the board showing all played positions
     private static List<List<Integer>> positionsWorth;//setup the worth of each position
+    private static boolean areYouLastPlayer;
+    private static int lastX;
+    private static int lastY;
+    private static int opponentX;
+    private static int opponentY;
+    private static int lastDirection;
     
     //Initialising values in the constructor
     public TicTacToe(int m, int n){
         this.m = m;
         this.n = n;
+        lastX = -1;
+        lastY = -1;
+        opponentX = -1;
+        opponentY = -1;
+        areYouLastPlayer = false;
+        lastDirection = 6;
         playedPositions = new ArrayList<>();
         positionsWorth = new ArrayList<>();
         for(int i = 0; i < n; i++){
@@ -62,7 +74,12 @@ public class TicTacToe {
         predictedPosition.setPlayer(true);
         predictedPosition.setX(mid);
         predictedPosition.setY(mid);
+        lastX = mid;
+        lastY = mid;
         
+        //Updating the player's worth and positions played
+        System.out.println("Next Play "+this.minimax(predictedPosition));
+        areYouLastPlayer = true;
         return predictedPosition;
     }
     
@@ -84,19 +101,14 @@ public class TicTacToe {
     //This method evaluates the play on the board and suggests the best play for player and opponent
     public PlayPosition evaluationFunction(PlayPosition currPlay){
         int i = 0;
-        int min = m;
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
         int minPosX = currPlay.getX();
         int minPosY = currPlay.getY();
-        boolean playerStatus = false;
+        int maxPosX = currPlay.getX();
+        int maxPosY = currPlay.getY();
         //Update current play on played positions
-        List<Integer> getPlayedPositionsRow = new ArrayList<>();
-        if(playedPositions.get(currPlay.getX()) != null){
-            getPlayedPositionsRow = playedPositions.get(currPlay.getX());
-            getPlayedPositionsRow.add(currPlay.getY(), 1);
-        }else{
-            getPlayedPositionsRow.add(currPlay.getY(), 1);
-        }
-        playedPositions.add(currPlay.getX(), getPlayedPositionsRow);
+        playedPositions.get(currPlay.getX()).set(currPlay.getY(), 1);
                 
         //Rather than check the entire boardwhich is not possible the bigger the board grows, we will only check for the surrounding eight directions 
         //with respect to how big m (not n) is
@@ -107,71 +119,117 @@ public class TicTacToe {
             int directionY[] = new int[]{(minPosY-(i+1)), (minPosY), (minPosY+(i+1)), (minPosY-(i+1)), (minPosY+(i+1)), (minPosY-(i+1)), (minPosY), (minPosY+(i+1)) };
             for(int dir = 0; dir < 8; dir++){
                 int value = 0;
-                int valueX = 0;
+                //int valueX = 0;
                 //Checking if the position selected to evaluate exists on the board
                 if(this.exists(directionX[dir], directionY[dir])){
-                    System.out.println("1"+playerStatus);
                     if(currPlay.isPlayer()){//If my player played last and opponent to play now
-                        System.out.println("2");
                         if(playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
                             value = positionsWorth.get(directionX[dir]).get(directionY[dir]) + 1;
                             if (value > m) {//check if victory has been attained
                                 return new PlayPosition();
                             }
-                            positionsWorth.get(directionX[dir]).add(directionY[dir], value);
-                            //checking if the position is the minimum value returns for my player and if the position has not been played
-                            if (value < min && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0) {
-                                //This is the mini part of minimax
-                                System.out.println("4");
-                                minPosX = directionX[dir];
-                                minPosY = directionY[dir];
-                                playerStatus = false;
-                            }
+                            if(value < 1) value = 1;//starting again
+                            positionsWorth.get(directionX[dir]).set(directionY[dir], value);
+                            lastX = currPlay.getX();
+                            lastY = currPlay.getY();
                         }
                     }else{//If my opponent played last and I am to play now
-                        System.out.println("3");
                         if(playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
                             value = positionsWorth.get(directionX[dir]).get(directionY[dir]) - 1;
-                            System.out.println("13" + value);
-                            if (value < -m) {//check if victory has been attained
-                                System.out.println("13" + value);
-                                return new PlayPosition();
-                            }
-                            if (value == -m) {
-                                minPosX = directionX[dir];
-                                minPosY = directionY[dir];
-                                playerStatus = true;
-                                break;
-                            }
-                            positionsWorth.get(directionX[dir]).add(directionY[dir], value);
-                            //checking if the position is the maximum value returns for my player and if the position has not been played
-                            if (value > -min && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0) {
-                                System.out.println("5");
-                                //This is the maxi part of minimax
-                                minPosX = directionX[dir];
-                                minPosY = directionY[dir];
-                                playerStatus = true;
-                            }
-                        }
-                        
+                            if(value > -1) value = -1;//starting again
+                            positionsWorth.get(directionX[dir]).set(directionY[dir], value);
+                            
+                            opponentX = currPlay.getX();
+                            opponentY = currPlay.getY();
+                        }                        
+                            
                     }
                 }
             }
             
             i++;
         }
-        System.out.println("xxx"+playerStatus);
+        
+        //For my opponent
+        //if(currPlay.isPlayer()){
+            if(opponentX > -1){
+                int directionX[] = new int[]{(opponentX+1), (opponentX-1), (opponentX), (opponentX), (opponentX-1), (opponentX+1), (opponentX-1), (opponentX+1)};
+                int directionY[] = new int[]{(opponentY), (opponentY), (opponentY+1), (opponentY-1), (opponentY+1), (opponentY+1), (opponentY-1), (opponentY-1)};
+                for(int dir = 0; dir < 8; dir++){
+                    if(this.exists(directionX[dir], directionY[dir]) && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
+                        System.out.println("Play "+positionsWorth.get(directionX[dir]).get(directionY[dir]));
+                        System.out.println("X = "+directionX[dir]+" Y = "+directionY[dir]);
+                        if (positionsWorth.get(directionX[dir]).get(directionY[dir]) < min) {
+                            min = positionsWorth.get(directionX[dir]).get(directionY[dir]);
+                            minPosX = directionX[dir];
+                            minPosY = directionY[dir];
+                        }
+                    }
+                }
+            }
+        //}else{//For my player
+            if(lastX > -1){ //7, 2, 5, 4, 3, 8, 1, 6 
+                int directionX[] = new int[]{(lastX+1), (lastX-1), (lastX), (lastX), (lastX-1), (lastX+1), (lastX-1), (lastX+1)};
+                int directionY[] = new int[]{(lastY), (lastY), (lastY+1), (lastY-1), (lastY+1), (lastY+1), (lastY-1), (lastY-1)};
+                for(int dir = 0; dir < 8; dir++){
+                    if(this.exists(directionX[dir], directionY[dir]) && playedPositions.get(directionX[dir]).get(directionY[dir]) == 0){
+                        System.out.println("Playi "+positionsWorth.get(directionX[dir]).get(directionY[dir]));
+                        System.out.println("Xi = "+directionX[dir]+" Yi = "+directionY[dir]);
+                        if (positionsWorth.get(directionX[dir]).get(directionY[dir]) > max) {
+                            max = positionsWorth.get(directionX[dir]).get(directionY[dir]);
+                            maxPosX = directionX[dir];
+                            maxPosY = directionY[dir];
+                        }
+                    }
+                }
+            }
+        //}
+        //looking for maximum and minimum
+        /**for(int x = 0; x < n; x++){
+            for(int y = 0; y < n; y++){
+                if(playedPositions.get(x).get(y) == 0){
+                    if(positionsWorth.get(x).get(y) < min){
+                        min = positionsWorth.get(x).get(y);
+                        minPosX = x;
+                        minPosY = y;
+                    }
+                    if(positionsWorth.get(x).get(y) > max){
+                        max = positionsWorth.get(x).get(y);
+                        maxPosX = x;
+                        maxPosY = y;
+                    }
+                }
+            }  
+        }**/
+        
         PlayPosition predictedPosition = new PlayPosition();
-        predictedPosition.setPlayer(playerStatus);
-        predictedPosition.setX(minPosX);
-        predictedPosition.setY(minPosY);
+        System.out.println("Min "+min+" Max "+max);
+        if(currPlay.isPlayer()){
+            predictedPosition.setPlayer(false);
+            predictedPosition.setX(minPosX);
+            predictedPosition.setY(minPosY);
+        }else{
+            if(Math.abs(min) > Math.abs(max)){//try to stop him from winning
+                predictedPosition.setPlayer(true);
+                predictedPosition.setX(minPosX);
+                predictedPosition.setY(minPosY);
+            }else{//play my game
+                predictedPosition.setPlayer(true);
+                predictedPosition.setX(maxPosX);
+                predictedPosition.setY(maxPosY);
+            }
+            /**predictedPosition.setPlayer(true);
+                predictedPosition.setX(maxPosX);
+                predictedPosition.setY(maxPosY);**/
+        }
+        
         
         return predictedPosition;
     }
     
     //Method to check if a position exists on the board
     private boolean exists(int x, int y){
-        if(x >= 0 && x < n && y >= 0 && y < n) return true;
+        if((x >= 0 && x < n) && (y >= 0 && y < n)) return true;
         return false;
     }
     
@@ -220,6 +278,7 @@ public class TicTacToe {
                     lastPlay.setSymbol(jsonObj1.get("symbol").getAsString());
                     lastPlay.setTeamId(jsonObj1.get("teamId").getAsString());
                     lastPlayList.add(lastPlay);
+                    playedPositions.get(Integer.parseInt(lastPlay.getMoveX())).set(Integer.parseInt(lastPlay.getMoveY()), 1);
                 }
             }
             
@@ -241,17 +300,24 @@ public class TicTacToe {
             form.param("move", move.getMove());
             form.param("type", move.getType());
             form.param("gameId", move.getGameId());
-            Response response2 = target.request()
+            String response = target.request()
                     .header("x-api-key", Proxy.getApiKey())
                     .header("userId", Proxy.getUserID())
-                    .post(Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED),Response.class);
-            
-	    if (response2.getStatus() != 200) {
-		throw new RuntimeException("Failed : HTTP error code : " + response2.getStatus());
-	    }
+                    .post(Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED),String.class);
  
-	    String response = response2.toString();
 	    System.out.println("Response "+response);
+            JsonParser parser = new JsonParser();
+      	    JsonElement responseElement = parser.parse(response);
+            JsonObject jsonObj = responseElement.getAsJsonObject();
+            String code = jsonObj.get("code").getAsString();
+            String message = "";
+            if(jsonObj.has("message")){
+                message = jsonObj.get("message").getAsString();
+            }
+            String msg = "Cannot make move - Game is no longer open: "+Proxy.getGameID();
+            if(code.equals("FAIL") && message.equals(msg)){
+                return 2;
+            }
             
             return 1;
 	} catch (Exception e) {
@@ -281,7 +347,8 @@ public class TicTacToe {
         //AdversarialSearch aSearch = new AdversarialSearch();
         int numberOfPlays = boardSize * boardSize;
         int countPlay = 0;
-        while(countPlay < numberOfPlays){//This is determined by victory or there is no more place to play on the board
+        int flag = 0;
+        while(true){//This is determined by victory or there is no more place to play on the board
             //Checking if anyone has played
             List<LastPlay> gameLastPlay = ttt.getLastPlay();
             PlayPosition play = new PlayPosition();
@@ -294,32 +361,42 @@ public class TicTacToe {
                 play = ttt.playFirst();
             }else{
                 //Regular play
-                System.out.println("Now");
+                System.out.println("Now"+areYouLastPlayer);
                 PlayPosition lastPlayConverted = new PlayPosition();
                 lastPlayConverted.setX(Integer.parseInt(gameLastPlay.get(0).getMoveX()));
                 lastPlayConverted.setY(Integer.parseInt(gameLastPlay.get(0).getMoveY()));
+                playedPositions.get(lastPlayConverted.getX()).set(lastPlayConverted.getY(), 1);
                 if(gameLastPlay.get(0).getTeamId().equalsIgnoreCase(Proxy.getTeamID())){//My team played last so my opponent turn
                     lastPlayConverted.setPlayer(true);
                 }else{
                     //My team plays now
                     lastPlayConverted.setPlayer(false);
                 }
-                play = ttt.minimax(lastPlayConverted);
-                //When victory is attained
-                if(play == null){
-                    System.out.println("Victory Has Been Attained");
-                    break;
+                if(areYouLastPlayer != lastPlayConverted.isPlayer()){
+                    play = ttt.minimax(lastPlayConverted);
+                    areYouLastPlayer = play.isPlayer();
+                    flag = 1;
+                }else{
+                    flag = 0;
                 }
             }
             
             if(play.isPlayer()){
                 String currMove = play.getX() + "," + play.getY();
                 move.setMove(currMove);
+                System.out.println("Move "+currMove);
+                //Update current play on played positions
+                playedPositions.get(play.getX()).set(play.getY(), 1);
                 
-                System.out.println("Move response " + ttt.makeMove(move));
+                int retValue = ttt.makeMove(move);
+                if(retValue == 2){
+                    System.out.println("Victory Has Been Attained");
+                    break;
+                }
+                System.out.println("Move response " + retValue);
             }
             
-            countPlay++;
+            //if(flag == 1) countPlay += 2;
         }
         
         System.out.println("End TicTacToe Using Adversarial Search");
